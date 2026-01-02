@@ -1,0 +1,82 @@
+name: Deploy Bot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Ubuntu Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+      
+      - name: Deploy to server
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          GUILD_ID: ${{ secrets.GUILD_ID }}
+          ADMIN_ROLE_ID: ${{ secrets.ADMIN_ROLE_ID }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" << 'EOF'
+            set -e
+            PROJECT_DIR="/opt/gsc-bot"
+            
+            # Navigate to project directory
+            cd "$PROJECT_DIR"
+            
+            # Pull latest changes
+            git pull origin main
+            
+            # Activate virtual environment and update dependencies
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            
+            # Update .env file with secrets
+            cat > .env << ENVEOF
+          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+          GUILD_ID=${{ secrets.GUILD_ID }}
+          ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}
+          ENVEOF
+            
+            # Restart bot service
+            sudo systemctl restart gsc-bot
+            
+            # Check if service started successfully
+            sleep 3
+            if ! systemctl is-active --quiet gsc-bot; then
+              echo "ERROR: Bot failed to start!"
+              sudo journalctl -u gsc-bot -n 50 --no-pager
+              exit 1
+            fi
+            
+            echo "Deployment successful!"
+            sudo systemctl status gsc-bot --no-pager
+          EOF
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
