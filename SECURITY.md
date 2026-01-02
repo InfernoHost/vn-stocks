@@ -19,9 +19,9 @@ If you discover a security vulnerability, please report it privately:
 
 ### How to Report
 
-1. **Email**: Send details to hello@infernohost.qzz.io
+1. **Email**: Send details to security@infernohost.com
 2. **GitHub Security**: Use [GitHub Security Advisories](../../security/advisories/new)
-3. **Discord**: DM the maintainer on Discord (if applicable)
+3. **Discord**: You may contact the maintainer on Discord for coordination, but do not share vulnerability details there—use email or GitHub Security Advisories instead.
 
 ### What to Include
 
@@ -56,7 +56,7 @@ When contributing to this project:
 
 ### Code Security
 - ✅ Validate all user input
-- ✅ Use parameterized queries (we use SQLite with aiosqlite)
+- ✅ Use parameterized queries to prevent SQL injection (we use SQLite with aiosqlite)
 - ✅ Keep dependencies updated
 - ✅ Review Dependabot PRs promptly
 
