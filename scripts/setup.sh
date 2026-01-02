@@ -7,7 +7,7 @@ echo "This script will set up the bot on your Ubuntu server"
 # Configuration
 PROJECT_DIR="/opt/gsc-bot"
 SERVICE_USER="gscbot"
-REPO_URL="https://github.com/yourusername/vn-stocks.git"  # Update with your repo URL
+REPO_URL="https://github.com/alivec0rpse/vn-stocks.git"  # Update with your repo URL
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
