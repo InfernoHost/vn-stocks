@@ -60,42 +60,35 @@ jobs:
       
       - name: Deploy to server
         run: |
-          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s << 'EOF'
-            set -e
-            PROJECT_DIR="/opt/gsc-bot"
-            
-            cd "$PROJECT_DIR"
-            sudo chown -R gscbot:gscbot "$PROJECT_DIR"
-            
-            sudo -u gscbot bash << 'GITCMD'
-              cd /opt/gsc-bot
-              git config --global --add safe.directory /opt/gsc-bot
-              git remote set-url origin https://github.com/alivec0rpse/vn-stocks.git
-              git fetch origin main
-              git reset --hard origin/main
-            GITCMD
-            
-            sudo -u gscbot bash << 'INNER_EOF'
-              cd /opt/gsc-bot
-              source venv/bin/activate
-              pip install --upgrade pip -q
-              pip install -r requirements.txt -q
-              
-              echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" > .env
-              echo "GUILD_ID=${{ secrets.GUILD_ID }}" >> .env
-              echo "ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}" >> .env
-            INNER_EOF
-            
-            sudo systemctl restart gsc-bot
-            sleep 3
-            
-            if ! systemctl is-active --quiet gsc-bot; then
-              echo "Bot failed to start!"
-              sudo journalctl -u gsc-bot -n 50 --no-pager
-              exit 1
-            fi
-            
-            echo "Deployment successful!"
+          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'EOF'
+          set -e
+          cd /opt/gsc-bot
+          
+          sudo chown -R gscbot:gscbot /opt/gsc-bot
+          sudo -u gscbot git config --global --add safe.directory /opt/gsc-bot
+          sudo -u gscbot git remote set-url origin https://github.com/alivec0rpse/vn-stocks.git
+          sudo -u gscbot git fetch origin main
+          sudo -u gscbot git reset --hard origin/main
+          
+          sudo -u gscbot /opt/gsc-bot/venv/bin/pip install --upgrade pip -q
+          sudo -u gscbot /opt/gsc-bot/venv/bin/pip install -r requirements.txt -q
+          
+          sudo -u gscbot bash -c 'cat > /opt/gsc-bot/.env << ENVEOF
+          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+          GUILD_ID=${{ secrets.GUILD_ID }}
+          ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}
+          ENVEOF'
+          
+          sudo systemctl restart gsc-bot
+          sleep 3
+          
+          if ! systemctl is-active --quiet gsc-bot; then
+            echo "Bot failed to start!"
+            sudo journalctl -u gsc-bot -n 50 --no-pager
+            exit 1
+          fi
+          
+          echo "Deployment successful!"
           EOF
       
       - name: Notify deployment status
