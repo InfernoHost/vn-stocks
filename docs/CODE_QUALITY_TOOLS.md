@@ -157,7 +157,8 @@ curl -s https://codecov.io/bash | bash
 
 1. **Fix critical issues first** - Security > Bugs > Style
 2. **Don't ignore warnings** - They catch real problems
-3. Gemini API Setup
+
+### Gemini API Setup
 
 Add your Gemini API key to GitHub secrets:
 
@@ -191,8 +192,6 @@ You now have **100% CodeRabbit equivalent** completely free:
 - ✅ PR review automation
 - ✅ No cost, ever!
 
-This setup gives you EVERYTHING CodeRabbit does, for $0. No subscription needed
-- PR review automation
-- No cost, ever!
+This setup gives you essentially everything CodeRabbit offers, with no subscription needed.
 
-CodeRabbit is nice but you don't need it. This setup catches 95% of what it does, for $0.
+You can safely skip CodeRabbit — this setup covers the vast majority of its value at zero cost.
