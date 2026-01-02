@@ -68,7 +68,7 @@ jobs:
             --exclude '__pycache__' \
             ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/gsc-bot/"
           
-          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'EOF'
+          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'ENDSSH'
           set -e
           cd /opt/gsc-bot
           
@@ -77,13 +77,10 @@ jobs:
           sudo -u gscbot /opt/gsc-bot/venv/bin/pip install --upgrade pip -q
           sudo -u gscbot /opt/gsc-bot/venv/bin/pip install -r /opt/gsc-bot/requirements.txt -q
           
-          sudo bash -c 'cat > /opt/gsc-bot/.env << ENVEOF
-DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-GUILD_ID=${{ secrets.GUILD_ID }}
-ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}
-ENVEOF'
+          echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" | sudo -u gscbot tee /opt/gsc-bot/.env > /dev/null
+          echo "GUILD_ID=${{ secrets.GUILD_ID }}" | sudo -u gscbot tee -a /opt/gsc-bot/.env > /dev/null
+          echo "ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}" | sudo -u gscbot tee -a /opt/gsc-bot/.env > /dev/null
           
-          sudo chown gscbot:gscbot /opt/gsc-bot/.env
           sudo systemctl restart gsc-bot
           sleep 3
           
@@ -94,7 +91,7 @@ ENVEOF'
           fi
           
           echo "Deployment successful!"
-          EOF
+          ENDSSH
       
       - name: Notify deployment status
         if: always()
