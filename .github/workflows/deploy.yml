@@ -60,25 +60,30 @@ jobs:
       
       - name: Deploy to server
         run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude '.git' \
+            --exclude '.env' \
+            --exclude 'venv' \
+            --exclude 'data' \
+            --exclude '__pycache__' \
+            ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/gsc-bot/"
+          
           ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'EOF'
           set -e
           cd /opt/gsc-bot
           
           sudo chown -R gscbot:gscbot /opt/gsc-bot
-          sudo -u gscbot git config --global --add safe.directory /opt/gsc-bot
-          sudo -u gscbot git remote set-url origin https://github.com/alivec0rpse/vn-stocks.git
-          sudo -u gscbot git fetch origin main
-          sudo -u gscbot git reset --hard origin/main
           
           sudo -u gscbot /opt/gsc-bot/venv/bin/pip install --upgrade pip -q
-          sudo -u gscbot /opt/gsc-bot/venv/bin/pip install -r requirements.txt -q
+          sudo -u gscbot /opt/gsc-bot/venv/bin/pip install -r /opt/gsc-bot/requirements.txt -q
           
-          sudo -u gscbot bash -c 'cat > /opt/gsc-bot/.env << ENVEOF
-          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-          GUILD_ID=${{ secrets.GUILD_ID }}
-          ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}
-          ENVEOF'
+          sudo bash -c 'cat > /opt/gsc-bot/.env << ENVEOF
+DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+GUILD_ID=${{ secrets.GUILD_ID }}
+ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}
+ENVEOF'
           
+          sudo chown gscbot:gscbot /opt/gsc-bot/.env
           sudo systemctl restart gsc-bot
           sleep 3
           
