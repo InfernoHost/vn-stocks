@@ -64,17 +64,21 @@ jobs:
             set -e
             PROJECT_DIR="/opt/gsc-bot"
             
-            git config --global --add safe.directory "$PROJECT_DIR"
+            sudo chown -R gscbot:gscbot "$PROJECT_DIR"
             cd "$PROJECT_DIR"
-            git pull origin main
+            sudo -u gscbot git config --global --add safe.directory "$PROJECT_DIR"
+            sudo -u gscbot git pull origin main
             
-            source venv/bin/activate
-            pip install --upgrade pip -q
-            pip install -r requirements.txt -q
-            
-            echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" > .env
-            echo "GUILD_ID=${{ secrets.GUILD_ID }}" >> .env
-            echo "ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}" >> .env
+            sudo -u gscbot bash << 'INNER_EOF'
+              cd /opt/gsc-bot
+              source venv/bin/activate
+              pip install --upgrade pip -q
+              pip install -r requirements.txt -q
+              
+              echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" > .env
+              echo "GUILD_ID=${{ secrets.GUILD_ID }}" >> .env
+              echo "ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}" >> .env
+            INNER_EOF
             
             sudo systemctl restart gsc-bot
             sleep 3
