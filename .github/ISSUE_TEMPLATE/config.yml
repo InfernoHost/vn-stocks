@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Ask a Question
+    url: https://github.com/your-username/vn-stocks/discussions/new?category=q-a
+    about: Ask questions about using or contributing to the bot
+  
+  - name: 💡 General Discussion
+    url: https://github.com/your-username/vn-stocks/discussions
+    about: Discuss ideas, share feedback, or chat with the community
+  
+  - name: 📖 Documentation
+    url: https://github.com/your-username/vn-stocks/blob/main/README.md
+    about: Read the documentation and setup guides
+  
+  - name: 🔒 Security Issue
+    url: https://github.com/your-username/vn-stocks/security/advisories/new
+    about: Report a security vulnerability (private)

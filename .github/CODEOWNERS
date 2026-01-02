@@ -1,0 +1,31 @@
+# Code Owners
+# These users will be requested for review when PRs modify these files
+
+# Default owner for everything
+* @your-github-username
+
+# Workflows and CI/CD
+/.github/workflows/ @your-github-username
+/.github/dependabot.yml @your-github-username
+
+# Core bot logic
+/bot.py @your-github-username
+/market.py @your-github-username
+/market_simulator.py @your-github-username
+
+# Database and data management
+/database.py @your-github-username
+/data/ @your-github-username
+
+# Configuration
+/config.py @your-github-username
+/.env.example @your-github-username
+
+# Documentation
+/docs/ @your-github-username
+/README.md @your-github-username
+/CONTRIBUTING.md @your-github-username
+
+# Security
+/SECURITY.md @your-github-username
+/.gitignore @your-github-username
