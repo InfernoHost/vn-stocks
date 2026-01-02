@@ -35,7 +35,7 @@ jobs:
       
       - name: Get PR metadata
         id: pr-info
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: pr } = await github.rest.pulls.get({
@@ -133,7 +133,7 @@ jobs:
           echo "✓ AI review generated successfully"
       
       - name: Post AI Review Comment
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
