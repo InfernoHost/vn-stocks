@@ -133,13 +133,16 @@ def main():
     # Check configuration
     if not config.DISCORD_TOKEN:
         print("ERROR: DISCORD_TOKEN not set in .env file!", file=sys.stderr)
+        print("Create a .env file from .env.example and add your bot token.", file=sys.stderr)
         sys.exit(1)
     
     if not config.GUILD_ID:
-        print("WARNING: GUILD_ID not set in .env file. Commands will not be synced.", file=sys.stderr)
+        print("WARNING: GUILD_ID not set in .env file.", file=sys.stderr)
+        print("Commands will sync globally (takes up to 1 hour).", file=sys.stderr)
     
     if not config.ADMIN_ROLE_ID:
-        print("WARNING: ADMIN_ROLE_ID not set in .env file. Admin commands will not work.", file=sys.stderr)
+        print("WARNING: ADMIN_ROLE_ID not set in .env file.", file=sys.stderr)
+        print("Admin commands will not work until this is configured.", file=sys.stderr)
     
     # Create and run bot
     bot = EconomyBot()
