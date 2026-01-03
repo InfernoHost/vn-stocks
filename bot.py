@@ -44,6 +44,11 @@ class EconomyBot(commands.Bot):
         logger.info("Initializing market data...")
         await market.market.initialize()
         
+        # Register persistent views for live graphs
+        from live_graphs import LiveGraphView
+        self.add_view(LiveGraphView())
+        logger.info("Registered persistent views")
+        
         # Load cogs
         logger.info("Loading commands...")
         for ext in self.initial_extensions:

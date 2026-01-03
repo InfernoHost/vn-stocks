@@ -115,3 +115,70 @@ class LiveGraphManager:
 
 # Global manager instance
 live_graph_manager = LiveGraphManager()
+
+
+class LiveGraphView(discord.ui.View):
+    """View with controls for live graphs."""
+    
+    def __init__(self):
+        super().__init__(timeout=None)  # Persistent view
+        
+    @discord.ui.button(label="🔄 Keep Alive", style=discord.ButtonStyle.primary, custom_id="graph_keep_alive")
+    async def keep_alive_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Handle keep alive button click."""
+        live_graph = live_graph_manager.get_graph(interaction.message.id)
+        
+        if not live_graph:
+            await interaction.response.send_message(
+                "⏹️ This graph is no longer updating.",
+                ephemeral=True
+            )
+            return
+        
+        # Only the user who created the graph can keep it alive
+        if interaction.user.id != live_graph.interaction_user_id:
+            await interaction.response.send_message(
+                "❌ Only the user who created this graph can keep it alive.",
+                ephemeral=True
+            )
+            return
+        
+        live_graph.keep_alive()
+        await interaction.response.send_message(
+            f"✅ Graph will continue updating for another 120 seconds.",
+            ephemeral=True
+        )
+    
+    @discord.ui.button(label="⏹️ Stop Updates", style=discord.ButtonStyle.danger, custom_id="graph_stop")
+    async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Handle stop button click."""
+        live_graph = live_graph_manager.get_graph(interaction.message.id)
+        
+        if not live_graph:
+            await interaction.response.send_message(
+                "⏹️ This graph is no longer updating.",
+                ephemeral=True
+            )
+            return
+        
+        # Only the user who created the graph can stop it
+        if interaction.user.id != live_graph.interaction_user_id:
+            await interaction.response.send_message(
+                "❌ Only the user who created this graph can stop it.",
+                ephemeral=True
+            )
+            return
+        
+        await live_graph.stop()
+        live_graph_manager.remove_graph(interaction.message.id)
+        
+        # Update embed to show stopped status
+        embed = interaction.message.embeds[0]
+        embed.description = "Price history (Updates stopped)"
+        embed.color = discord.Color.greyple()
+        
+        await interaction.message.edit(embed=embed, view=None)
+        await interaction.response.send_message(
+            "⏹️ Graph updates stopped.",
+            ephemeral=True
+        )

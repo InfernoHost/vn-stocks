@@ -61,67 +61,81 @@ async def generate_price_graph(symbol: str, days: int = 7) -> str:
     if not timestamps:
         raise ValueError(f"No valid price history for {symbol}")
     
-    # Create figure with dark theme like TradingView
-    fig = plt.figure(figsize=(config.GRAPH_WIDTH, config.GRAPH_HEIGHT), dpi=config.GRAPH_DPI, facecolor='#0D1117')
-    ax = fig.add_subplot(111, facecolor='#161B22')
+    # Create figure with professional stock chart styling
+    fig = plt.figure(figsize=(config.GRAPH_WIDTH, config.GRAPH_HEIGHT), dpi=config.GRAPH_DPI)
+    fig.patch.set_facecolor('#0B0E11')
     
-    # Plot line with glow effect (TradingView style)
-    # Main line
-    line_color = '#26A69A' if prices[-1] > prices[0] else '#EF5350'  # Green if up, red if down
-    ax.plot(timestamps, prices, linewidth=2.5, color=line_color, label='Price', zorder=3)
+    # Main chart
+    ax = fig.add_subplot(111)
+    ax.set_facecolor('#131722')
     
-    # Add subtle glow
-    ax.plot(timestamps, prices, linewidth=6, color=line_color, alpha=0.15, zorder=2)
+    # Determine color (green if up, red if down)
+    is_bullish = prices[-1] >= prices[0]
+    line_color = '#26A69A' if is_bullish else '#EF5350'
     
-    # Fill with gradient (lighter at top)
-    ax.fill_between(timestamps, prices, alpha=0.15, color=line_color, zorder=1)
+    # Plot with thicker line for stock-like appearance
+    ax.plot(timestamps, prices, linewidth=2, color=line_color, zorder=5, solid_capstyle='round')
     
-    # Calculate and plot moving average (optional, if enough data)
-    if len(prices) > 10:
-        ma_period = min(10, len(prices) // 3)
-        ma_prices = []
-        for i in range(len(prices)):
-            if i < ma_period:
-                ma_prices.append(sum(prices[:i+1]) / (i+1))
-            else:
-                ma_prices.append(sum(prices[i-ma_period+1:i+1]) / ma_period)
-        ax.plot(timestamps, ma_prices, linewidth=1.5, color='#7B68EE', alpha=0.7, linestyle='--', label=f'{ma_period}MA', zorder=2)
+    # Add area fill with gradient effect
+    ax.fill_between(timestamps, prices, alpha=0.2, color=line_color, zorder=1)
     
-    # Format with TradingView style
+    # Add high/low markers for recent peaks
+    if len(prices) > 5:
+        high_idx = prices.index(max(prices[-20:] if len(prices) > 20 else prices))
+        low_idx = prices.index(min(prices[-20:] if len(prices) > 20 else prices))
+        ax.plot(timestamps[high_idx], prices[high_idx], 'o', color='#26A69A', markersize=6, zorder=6)
+        ax.plot(timestamps[low_idx], prices[low_idx], 'o', color='#EF5350', markersize=6, zorder=6)
+    
+    # Calculate statistics
     team_name = team_detection.get_team_name(symbol)
     current_price = prices[-1]
-    price_change = prices[-1] - prices[0]
-    price_change_pct = (price_change / prices[0] * 100) if prices[0] != 0 else 0
-    change_emoji = '▲' if price_change > 0 else '▼'
+    open_price = prices[0]
+    high_price = max(prices)
+    low_price = min(prices)
+    price_change = current_price - open_price
+    price_change_pct = (price_change / open_price * 100) if open_price != 0 else 0
     
-    ax.set_title(
-        f'{symbol} - {team_name}  |  {current_price:.2f}C {change_emoji}{abs(price_change_pct):.1f}%',
-        fontsize=14, fontweight='bold', color='#C9D1D9', pad=20
-    )
-    ax.set_xlabel('', fontsize=10)  # No label, cleaner look
-    ax.set_ylabel('Price (Cogs)', fontsize=11, color='#8B949E')
+    # Title with stock info
+    change_color = '#26A69A' if price_change >= 0 else '#EF5350'
+    change_symbol = '+' if price_change >= 0 else ''
+    title_text = f'{symbol}  {team_name}     {current_price:.2f}C  {change_symbol}{price_change:.2f} ({change_symbol}{price_change_pct:.1f}%)'
+    ax.text(0.01, 1.05, title_text, transform=ax.transAxes, fontsize=13, 
+            fontweight='bold', color='#D1D4DC', verticalalignment='top')
     
-    # Format x-axis (TradingView style - cleaner)
+    # Add OHLC info
+    info_text = f'O: {open_price:.2f}  H: {high_price:.2f}  L: {low_price:.2f}  C: {current_price:.2f}'
+    ax.text(0.01, 0.98, info_text, transform=ax.transAxes, fontsize=9,
+            color='#787B86', verticalalignment='top')
+    
+    # Remove axis labels (cleaner)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    
+    # Format x-axis like real stock charts
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n%H:%M'))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    plt.setp(ax.xaxis.get_majorticklabels(), color='#8B949E', fontsize=9)
-    plt.setp(ax.yaxis.get_majorticklabels(), color='#8B949E', fontsize=9)
     
-    # Grid with TradingView style (horizontal only, subtle)
-    ax.grid(True, axis='y', alpha=0.1, linestyle='-', color='#30363D', linewidth=0.8)
-    ax.grid(False, axis='x')
+    # Style ticks
+    ax.tick_params(axis='x', colors='#787B86', labelsize=8, length=0, pad=8)
+    ax.tick_params(axis='y', colors='#787B86', labelsize=9, length=0, pad=8)
     
-    # Remove top and right spines (TradingView style)
+    # Grid - horizontal lines only, very subtle
+    ax.yaxis.grid(True, linestyle='-', linewidth=0.5, color='#2A2E39', alpha=0.5, zorder=0)
+    ax.xaxis.grid(False)
+    
+    # Remove all spines except bottom
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_color('#30363D')
-    ax.spines['bottom'].set_color('#30363D')
-    ax.spines['left'].set_linewidth(1)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_color('#2A2E39')
     ax.spines['bottom'].set_linewidth(1)
     
-    # Add legend with dark theme
-    legend = ax.legend(loc='upper left', framealpha=0.9, facecolor='#161B22', edgecolor='#30363D')
-    plt.setp(legend.get_texts(), color='#8B949E', fontsize=9)
+    # Add price markers on right side
+    ax.yaxis.set_label_position('right')
+    ax.yaxis.tick_right()
+    
+    # Set margins for cleaner look
+    ax.margins(x=0.02, y=0.1)
     
     # Tight layout
     plt.tight_layout()
