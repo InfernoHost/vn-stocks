@@ -5,7 +5,7 @@ permissions:
   pull-requests: write
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -14,13 +14,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      issues: write
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+        uses: actions/checkout@v4
 
       - uses: actions/labeler@v5
         with:
