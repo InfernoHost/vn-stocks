@@ -61,32 +61,81 @@ async def generate_price_graph(symbol: str, days: int = 7) -> str:
     if not timestamps:
         raise ValueError(f"No valid price history for {symbol}")
     
-    # Create figure
-    fig, ax = plt.subplots(figsize=(config.GRAPH_WIDTH, config.GRAPH_HEIGHT), dpi=config.GRAPH_DPI)
+    # Create figure with professional stock chart styling
+    fig = plt.figure(figsize=(config.GRAPH_WIDTH, config.GRAPH_HEIGHT), dpi=config.GRAPH_DPI)
+    fig.patch.set_facecolor('#0B0E11')
     
-    # Plot data with gradient color
-    ax.plot(timestamps, prices, linewidth=2.5, color='#5865F2', label='Price')
-    ax.fill_between(timestamps, prices, alpha=0.4, color='#5865F2')
+    # Main chart
+    ax = fig.add_subplot(111)
+    ax.set_facecolor('#131722')
     
-    # Format
+    # Determine color (green if up, red if down)
+    is_bullish = prices[-1] >= prices[0]
+    line_color = '#26A69A' if is_bullish else '#EF5350'
+    
+    # Plot with thicker line for stock-like appearance
+    ax.plot(timestamps, prices, linewidth=2, color=line_color, zorder=5, solid_capstyle='round')
+    
+    # Add area fill with gradient effect
+    ax.fill_between(timestamps, prices, alpha=0.2, color=line_color, zorder=1)
+    
+    # Add high/low markers for recent peaks
+    if len(prices) > 5:
+        high_idx = prices.index(max(prices[-20:] if len(prices) > 20 else prices))
+        low_idx = prices.index(min(prices[-20:] if len(prices) > 20 else prices))
+        ax.plot(timestamps[high_idx], prices[high_idx], 'o', color='#26A69A', markersize=6, zorder=6)
+        ax.plot(timestamps[low_idx], prices[low_idx], 'o', color='#EF5350', markersize=6, zorder=6)
+    
+    # Calculate statistics
     team_name = team_detection.get_team_name(symbol)
-    ax.set_title(f'{symbol} - {team_name} Price History', fontsize=16, fontweight='bold', color='white')
-    ax.set_xlabel('Time', fontsize=12, color='white')
-    ax.set_ylabel('Price (Cogs)', fontsize=12, color='white')
+    current_price = prices[-1]
+    open_price = prices[0]
+    high_price = max(prices)
+    low_price = min(prices)
+    price_change = current_price - open_price
+    price_change_pct = (price_change / open_price * 100) if open_price != 0 else 0
     
-    # Format x-axis
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+    # Title with stock info
+    change_color = '#26A69A' if price_change >= 0 else '#EF5350'
+    change_symbol = '+' if price_change >= 0 else ''
+    title_text = f'{symbol}  {team_name}     {current_price:.2f}C  {change_symbol}{price_change:.2f} ({change_symbol}{price_change_pct:.1f}%)'
+    ax.text(0.01, 1.05, title_text, transform=ax.transAxes, fontsize=13, 
+            fontweight='bold', color='#D1D4DC', verticalalignment='top')
+    
+    # Add OHLC info
+    info_text = f'O: {open_price:.2f}  H: {high_price:.2f}  L: {low_price:.2f}  C: {current_price:.2f}'
+    ax.text(0.01, 0.98, info_text, transform=ax.transAxes, fontsize=9,
+            color='#787B86', verticalalignment='top')
+    
+    # Remove axis labels (cleaner)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    
+    # Format x-axis like real stock charts
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n%H:%M'))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    plt.xticks(rotation=45, ha='right', color='white')
-    plt.yticks(color='white')
     
-    # Grid with custom color
-    ax.grid(True, alpha=0.2, linestyle='--', color='#99AAB5')
+    # Style ticks
+    ax.tick_params(axis='x', colors='#787B86', labelsize=8, length=0, pad=8)
+    ax.tick_params(axis='y', colors='#787B86', labelsize=9, length=0, pad=8)
     
-    # Style spines
-    for spine in ax.spines.values():
-        spine.set_color('#2C2F33')
-        spine.set_linewidth(1.5)
+    # Grid - horizontal lines only, very subtle
+    ax.yaxis.grid(True, linestyle='-', linewidth=0.5, color='#2A2E39', alpha=0.5, zorder=0)
+    ax.xaxis.grid(False)
+    
+    # Remove all spines except bottom
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_color('#2A2E39')
+    ax.spines['bottom'].set_linewidth(1)
+    
+    # Add price markers on right side
+    ax.yaxis.set_label_position('right')
+    ax.yaxis.tick_right()
+    
+    # Set margins for cleaner look
+    ax.margins(x=0.02, y=0.1)
     
     # Tight layout
     plt.tight_layout()

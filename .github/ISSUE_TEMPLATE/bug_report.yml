@@ -1,0 +1,103 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the information below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of what the bug is
+      placeholder: The bot crashes when I use /buy command...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Run command /buy STMP 10
+        2. See error message...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: The bot should purchase 10 shares...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Bot responded with error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Paste any error messages or logs
+      render: shell
+      placeholder: |
+        Traceback (most recent call last):
+          File "bot.py", line 123...
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical (bot crashes or data loss)
+        - High (major feature broken)
+        - Medium (feature works but has issues)
+        - Low (minor annoyance)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Bot Version
+      description: What version are you running? (check latest commit hash)
+      placeholder: commit abc1234 or "latest"
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: What's your setup?
+      value: |
+        - OS: [e.g., Ubuntu 22.04, Windows 11]
+        - Python version: [e.g., 3.10.2]
+        - Discord.py version: [e.g., 2.3.0]
+      render: markdown
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I am using the latest version of the bot
+          required: false
+        - label: I have included error logs (if applicable)
+          required: false

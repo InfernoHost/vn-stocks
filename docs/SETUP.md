@@ -54,7 +54,7 @@ This checklist will guide you through setting up the GSC Discord bot from scratc
 - [ ] **Prepare Ubuntu server**
   - Ubuntu 18.04 or later
   - SSH access with sudo privileges
-  - Python 3.8+ installed
+  - Python 3.13+ installed
 
 - [ ] **Run setup script on server**
   ```bash
@@ -178,4 +178,4 @@ sudo systemctl restart gsc-bot
 - Ensure guild ID is set
 - Try resyncing: restart bot
 
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed troubleshooting.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed troubleshooting.

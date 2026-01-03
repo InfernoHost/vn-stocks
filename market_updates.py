@@ -34,6 +34,11 @@ class MarketUpdatesBroadcaster:
         """Periodic market updates broadcast."""
         await self.send_market_update()
     
+    @market_updates_loop.before_loop
+    async def before_market_updates_loop(self):
+        """Wait for bot to be ready before starting loop."""
+        await self.bot.wait_until_ready()
+    
     async def send_market_update(self):
         """Send market update to the designated channel."""
         if not config.MARKET_UPDATES_CHANNEL_ID:
@@ -42,7 +47,8 @@ class MarketUpdatesBroadcaster:
         try:
             channel = self.bot.get_channel(config.MARKET_UPDATES_CHANNEL_ID)
             if not channel:
-                print(f"Market updates channel {config.MARKET_UPDATES_CHANNEL_ID} not found")
+                from logger import logger
+                logger.warning(f"Market updates channel {config.MARKET_UPDATES_CHANNEL_ID} not found")
                 return
             
             # Get all stocks

@@ -1,0 +1,96 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "needs-discussion"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please provide details below.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: I'm frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How would you like this to work?
+      placeholder: Add a new command /leaderboard that shows...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions?
+      placeholder: Could also be implemented as...
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the bot does this affect?
+      options:
+        - Trading commands (/buy, /sell, /portfolio)
+        - Market system (prices, stocks)
+        - Economy (balance, currency)
+        - Admin commands
+        - UI/Display (embeds, graphs)
+        - Team detection
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical (blocks usage)
+        - High (very useful)
+        - Medium (nice to have)
+        - Low (minor improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockup
+    attributes:
+      label: Visual Mockup
+      description: Add screenshots, diagrams, or examples
+      placeholder: Drag and drop images here...
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Contribution
+      description: Are you willing to help implement this?
+      options:
+        - label: I can help implement this feature
+          required: false
+        - label: I can help test this feature
+          required: false
+        - label: I can help document this feature
+          required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      description: Please confirm
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: This feature aligns with the bot's purpose
+          required: true

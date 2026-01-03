@@ -30,6 +30,14 @@ class MarketSimulator:
     async def market_update_loop(self):
         """Update prices every few minutes."""
         await self.update_market_prices()
+        
+        # Check and execute limit orders
+        from limit_orders import check_and_execute_orders
+        executed = await check_and_execute_orders()
+        
+        if executed:
+            import logging
+            logging.getLogger(__name__).info(f"Executed {len(executed)} limit orders")
     
     async def update_market_prices(self):
         """Calculate new prices based on activity and volatility."""

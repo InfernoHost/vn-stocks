@@ -1,0 +1,30 @@
+# Code Owners
+# These users will be requested for review when PRs modify these files
+
+# .github folder - alivec0rpse only
+/.github/ @alivec0rpse
+
+# Default owners for everything else
+* @alivec0rpse @Ellijah424
+
+# Core bot logic
+/bot.py @alivec0rpse @Ellijah424
+/market.py @alivec0rpse @Ellijah424
+/market_simulator.py @alivec0rpse @Ellijah424
+
+# Database and data management
+/database.py @alivec0rpse @Ellijah424
+/data/ @alivec0rpse @Ellijah424
+
+# Configuration
+/config.py @alivec0rpse @Ellijah424
+/.env.example @alivec0rpse @Ellijah424
+
+# Documentation
+/docs/ @alivec0rpse @Ellijah424
+/README.md @alivec0rpse @Ellijah424
+/CONTRIBUTING.md @alivec0rpse @Ellijah424
+
+# Security
+/SECURITY.md @alivec0rpse @Ellijah424
+/.gitignore @alivec0rpse

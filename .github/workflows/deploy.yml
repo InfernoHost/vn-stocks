@@ -6,6 +6,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Code Quality Check
@@ -20,6 +23,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          python-version: '3.13'
       
       - name: Install dependencies
         run: |

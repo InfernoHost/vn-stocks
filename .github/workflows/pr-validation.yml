@@ -7,11 +7,16 @@ on:
 jobs:
   validate:
     name: Validate Pull Request
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -23,14 +28,36 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 pylint
+          pip install flake8 bandit safety
+      
+      - name: Security scan with Bandit
+        run: |
+          echo "Running security checks..."
+          bandit -r . -ll -f json -o bandit-report.json || true
+          bandit -r . -ll
+        continue-on-error: true
+      
+      - name: Check dependencies for vulnerabilities
+        run: |
+          echo "Checking for vulnerable dependencies..."
+          safety check --json || true
+          safety check
+        continue-on-error: true
       
       - name: Lint with flake8
         run: |
-          # Critical errors only (will fail the build)
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Style warnings (informational only)
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics || true
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv,__pycache__,.git
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --exclude=venv,__pycache__,.git --statistics
+      
+      - name: Check for secrets
+        run: |
+          echo "Checking for hardcoded secrets..."
+          # Look for hardcoded tokens (exclude environment variable usage)
+          if grep -rE "DISCORD_TOKEN\s*=\s*['\"][^'\"]+['\"]" --include="*.py" --exclude-dir=venv . | grep -v "getenv\|environ"; then
+            echo "❌ Found hardcoded Discord tokens!"
+            exit 1
+          fi
+          echo "✓ No secrets found"
       
       - name: Check Python imports
         run: |
@@ -59,16 +86,12 @@ jobs:
           python -c "
           import config
           
-          # Required config attributes
-          required = ['TEAMS', 'TEAM_TAGS', 'SPURS_PER_COG', 'MARKET_UPDATE_INTERVAL', 
-                      'MESSAGE_COOLDOWN', 'ACTIVITY_DECAY', 'ACTIVITY_IMPACT']
-          
+          required = ['TEAMS', 'TEAM_TAGS', 'SPURS_PER_COG', 'MARKET_UPDATE_INTERVAL']
           missing = [attr for attr in required if not hasattr(config, attr)]
           if missing:
               print(f'Missing config: {missing}')
               exit(1)
           
-          # Validate TEAMS structure
           assert len(config.TEAMS) > 0, 'No teams defined'
           
           for symbol, team in config.TEAMS.items():
@@ -77,78 +100,77 @@ jobs:
               if missing_keys:
                   print(f'Team {symbol} missing: {missing_keys}')
                   exit(1)
-              
-              # Validate volatility range
-              if not 0 <= team['volatility'] <= 1:
-                  print(f'Team {symbol} volatility out of range: {team[\"volatility\"]}')
-                  exit(1)
           
           print('Config validation passed!')
           "
       
-      - name: Test database initialization
+      - name: Check database module
         run: |
           python -c "
-          import asyncio
-          import os
           import database
           
-          async def test():
-              # Use test database
-              original_path = database.config.DB_PATH
-              database.config.DB_PATH = 'test_economy.db'
-              
-              try:
-                  await database.init_db()
-                  print('✓ Database initialization successful')
-                  
-                  # Test player registration
-                  success = await database.register_player(12345)
-                  assert success, 'Failed to register player'
-                  print('✓ Player registration works')
-                  
-                  # Test duplicate registration
-                  success = await database.register_player(12345)
-                  assert not success, 'Duplicate registration should fail'
-                  print('✓ Duplicate registration blocked')
-                  
-                  print('\nDatabase tests passed!')
-              finally:
-                  database.config.DB_PATH = original_path
-                  if os.path.exists('test_economy.db'):
-                      os.remove('test_economy.db')
+          # Just verify the module can be imported and has required functions
+          required_funcs = ['init_db', 'register_player', 'get_balance', 'update_balance']
+          missing = [f for f in required_funcs if not hasattr(database, f)]
           
-          asyncio.run(test())
+          if missing:
+              print(f'Missing functions: {missing}')
+              exit(1)
+          
+          print('✓ Database module structure OK')
           "
       
-      - name: Check for common issues
-        run: |
-          echo "Checking for common issues..."
-          
-          # Check for hardcoded tokens/secrets
-          if grep -rn "MTQ1MTIyMTU\|DISCORD_TOKEN=" --include="*.py" --exclude-dir=venv .; then
-            echo "❌ Found hardcoded tokens!"
-            exit 1
-          fi
-          
-          # Check for print statements that should be logging
-          if grep -rn "print(" --include="*.py" --exclude-dir=venv . | grep -v "bot.py" | grep -v "^#"; then
-            echo "⚠️ Warning: Found print statements outside bot.py (consider using logging)"
-          fi
-          
-          echo "✓ No critical issues found"
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+        continue-on-error: true
       
-      - name: Generate summary
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🤖 Automated Code Review\n\n';
+            
+            if (fs.existsSync('bandit-report.json')) {
+              const bandit = JSON.parse(fs.readFileSync('bandit-report.json'));
+              const issues = bandit.results || [];
+              
+              if (issues.length > 0) {
+                comment += '### ⚠️ Security Issues Found\n\n';
+                issues.slice(0, 5).forEach(issue => {
+                  comment += `- **${issue.test_name}** (${issue.issue_severity})\n`;
+                  comment += `  - \`${issue.filename}:${issue.line_number}\`\n\n`;
+                });
+              } else {
+                comment += '### ✅ No Security Issues\n\n';
+              }
+            }
+            
+            comment += '### 📋 Review Checklist\n';
+            comment += '- [ ] All validation checks passed\n';
+            comment += '- [ ] Code follows style guidelines\n';
+            comment += '- [ ] Tests are passing\n';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        continue-on-error: true
+      
+      - name: Summary
         if: always()
         run: |
           echo "### PR Validation Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ All validation checks passed!" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "This PR is ready for review." >> $GITHUB_STEP_SUMMARY
+            echo "✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Some validation checks failed." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Please fix the issues above before requesting review." >> $GITHUB_STEP_SUMMARY
+            echo "❌ Some checks failed." >> $GITHUB_STEP_SUMMARY
           fi

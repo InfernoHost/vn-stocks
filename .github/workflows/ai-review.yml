@@ -1,0 +1,167 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  ai-review:
+    name: Gemini AI Review
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get PR diff
+        id: pr-diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          DIFF=$(git diff origin/${{ github.base_ref }}...HEAD)
+          echo "diff_size=${#DIFF}" >> $GITHUB_OUTPUT
+          
+          # Save diff to file (truncate if too large)
+          if [ ${#DIFF} -gt 50000 ]; then
+            echo "$DIFF" | head -c 50000 > pr_diff.txt
+            echo "⚠️ Diff truncated to 50KB" >> pr_diff.txt
+          else
+            echo "$DIFF" > pr_diff.txt
+          fi
+      
+      - name: Get PR metadata
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const fileList = files.map(f => `${f.filename} (+${f.additions}/-${f.deletions})`).join('\n');
+            
+            return {
+              title: pr.title,
+              description: pr.body || 'No description provided',
+              files: fileList,
+              additions: pr.additions,
+              deletions: pr.deletions
+            };
+      
+      - name: AI Code Review with Gemini
+        id: ai-review
+        continue-on-error: true
+        run: |
+          PR_INFO='${{ steps.pr-info.outputs.result }}'
+          
+          # Extract PR details safely
+          TITLE=$(echo "$PR_INFO" | jq -r '.title')
+          DESC=$(echo "$PR_INFO" | jq -r '.description')
+          FILES=$(echo "$PR_INFO" | jq -r '.files')
+          ADDITIONS=$(echo "$PR_INFO" | jq -r '.additions')
+          DELETIONS=$(echo "$PR_INFO" | jq -r '.deletions')
+          
+          # Truncate description if too long
+          if [ ${#DESC} -gt 2000 ]; then
+            DESC="${DESC:0:2000}... (truncated)"
+          fi
+          
+          # Read diff (already truncated in previous step)
+          PR_DIFF=$(cat pr_diff.txt)
+          
+          # Create prompt with proper escaping
+          jq -n \
+            --arg title "$TITLE" \
+            --arg desc "$DESC" \
+            --arg files "$FILES" \
+            --arg additions "$ADDITIONS" \
+            --arg deletions "$DELETIONS" \
+            --arg diff "$PR_DIFF" \
+            '{
+              contents: [{
+                parts: [{
+                  text: "You are an expert code reviewer for a Discord bot project written in Python. Review this pull request and provide:\n\n1. **Summary** (2-3 sentences): What does this PR do?\n2. **Key Changes**: Bullet list of main changes\n3. **Security Concerns**: Any security issues or vulnerabilities (or \"None found\")\n4. **Code Quality**: Issues with code style, complexity, or maintainability\n5. **Suggestions**: Specific improvements (with line numbers if possible)\n6. **Overall Assessment**: APPROVE, REQUEST_CHANGES, or COMMENT with reasoning\n\nBe concise, practical, and focus on issues that matter. Format your response in markdown.\n\nPR Title: \($title)\nDescription: \($desc)\n\nFiles Changed (\($additions) additions, \($deletions) deletions):\n\($files)\n\nDiff:\n\($diff)"
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 2048
+              }
+            }' > request.json
+          
+          # Call Gemini API
+          RESPONSE=$(curl -s -X POST \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+            -H "Content-Type: application/json" \
+            -H "x-goog-api-key: ${{ secrets.GEMINI_API_KEY }}" \
+            -d @request.json)
+          
+          # Debug output
+          echo "API Response:"
+          echo "$RESPONSE" | jq '.'
+          
+          # Extract review text
+          REVIEW=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "Failed to generate review"')
+          
+          # Check for API errors
+          ERROR=$(echo "$RESPONSE" | jq -r '.error.message // ""')
+          if [ ! -z "$ERROR" ]; then
+            echo "ERROR: $ERROR"
+            echo "Full response: $RESPONSE"
+            exit 1
+          fi
+          
+          # Save to file for next step
+          echo "$REVIEW" > ai_review.txt
+          
+          # Check if review was successful
+          if echo "$REVIEW" | grep -q "Failed to generate"; then
+            echo "ERROR: Gemini API call failed"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+          
+          echo "✓ AI review generated successfully"
+      
+      - name: Post AI Review Comment
+        if: steps.ai-review.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = fs.readFileSync('ai_review.txt', 'utf8');
+            
+            const comment = `## 🤖 AI Code Review (Gemini)
+            
+            ${review}
+            
+            ---
+            *This review was generated by Google Gemini. Please use human judgment for final decisions.*`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+            
+            console.log('✓ AI review posted to PR');
+      
+      - name: Upload review artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-review
+          path: ai_review.txt

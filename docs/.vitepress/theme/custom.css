@@ -1,0 +1,120 @@
+/**
+ * Customize default theme styling by overriding CSS variables:
+ * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
+ */
+
+/**
+ * Colors
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-c-brand: #58a6ff;
+  --vp-c-brand-light: #79c0ff;
+  --vp-c-brand-lighter: #a5d6ff;
+  --vp-c-brand-dark: #388bfd;
+  --vp-c-brand-darker: #1f6feb;
+
+  --vp-c-sponsor: #fd1d7c;
+}
+
+/**
+ * Component: Button
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-button-brand-border: var(--vp-c-brand-light);
+  --vp-button-brand-text: var(--vp-c-white);
+  --vp-button-brand-bg: var(--vp-c-brand);
+  --vp-button-brand-hover-border: var(--vp-c-brand-light);
+  --vp-button-brand-hover-text: var(--vp-c-white);
+  --vp-button-brand-hover-bg: var(--vp-c-brand-light);
+  --vp-button-brand-active-border: var(--vp-c-brand-light);
+  --vp-button-brand-active-text: var(--vp-c-white);
+  --vp-button-brand-active-bg: var(--vp-button-brand-bg);
+}
+
+/**
+ * Component: Home
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #1f6feb 30%, #58a6ff);
+
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #1f6feb 50%, #58a6ff 50%);
+  --vp-home-hero-image-filter: blur(40px);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --vp-home-hero-image-filter: blur(56px);
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --vp-home-hero-image-filter: blur(72px);
+  }
+}
+
+/**
+ * Component: Custom Block
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-custom-block-tip-border: var(--vp-c-brand);
+  --vp-custom-block-tip-text: var(--vp-c-brand-darker);
+  --vp-custom-block-tip-bg: var(--vp-c-brand-dimm);
+}
+
+.dark {
+  --vp-custom-block-tip-border: var(--vp-c-brand);
+  --vp-custom-block-tip-text: var(--vp-c-brand-lightest);
+  --vp-custom-block-tip-bg: var(--vp-c-brand-dimm);
+}
+
+/**
+ * Component: Algolia
+ * -------------------------------------------------------------------------- */
+
+.DocSearch {
+  --docsearch-primary-color: var(--vp-c-brand) !important;
+}
+
+/**
+ * Custom styles
+ * -------------------------------------------------------------------------- */
+
+.vp-doc h2 {
+  border-top: 1px solid var(--vp-c-divider);
+  padding-top: 24px;
+  margin-top: 48px !important;
+}
+
+.vp-doc h2:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0 !important;
+}
+
+/* Info boxes */
+.vp-doc .tip, .vp-doc .warning, .vp-doc .danger {
+  border-left-width: 4px;
+  padding: 12px 16px;
+  margin: 16px 0;
+}
+
+/* Code blocks */
+.vp-doc div[class*='language-'] {
+  margin: 16px 0;
+  border-radius: 6px;
+}
+
+/* Tables */
+.vp-doc table {
+  margin: 20px 0;
+}
+
+.vp-doc td, .vp-doc th {
+  padding: 12px;
+}

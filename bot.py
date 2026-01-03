@@ -32,7 +32,14 @@ class EconomyBot(commands.Bot):
             'commands_admin',
             'commands_graph',
             'commands_stock',
-            'commands_info'
+            'commands_info',
+            'commands_limit',
+            'commands_portfolio',
+            'commands_alerts',
+            'commands_history',
+            'commands_watchlist',
+            'achievements',
+            'commands_candlestick'
         ]
     
     async def setup_hook(self):
@@ -43,6 +50,11 @@ class EconomyBot(commands.Bot):
         # Initialize market data
         logger.info("Initializing market data...")
         await market.market.initialize()
+        
+        # Register persistent views for live graphs
+        from live_graphs import LiveGraphView
+        self.add_view(LiveGraphView())
+        logger.info("Registered persistent views")
         
         # Load cogs
         logger.info("Loading commands...")
@@ -93,6 +105,21 @@ class EconomyBot(commands.Bot):
             self.broadcaster = market_updates.initialize_broadcaster(self)
             self.broadcaster.start()
             logger.info(f"Broadcasting market updates to channel {config.MARKET_UPDATES_CHANNEL_ID}")
+        
+        # Start price alerts checker
+        logger.info("Starting price alerts checker...")
+        from price_alerts import check_and_trigger_alerts
+        
+        async def alert_loop():
+            while True:
+                try:
+                    await check_and_trigger_alerts(self)
+                except Exception as e:
+                    logger.error(f"Error checking alerts: {e}")
+                await asyncio.sleep(60)  # Check every minute
+        
+        self.loop.create_task(alert_loop())
+        logger.info("Price alerts checker started!")
     
     async def on_message(self, message: discord.Message):
         """Process messages for team activity scoring."""
