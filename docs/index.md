@@ -1,50 +1,42 @@
 ---
-layout: default
-title: Home
----
+layout: home
 
-# Welcome to GSC Stock Exchange 🎯
+hero:
+  name: GSC Stock Exchange
+  text: Discord Stock Market Bot
+  tagline: Trade team stocks that fluctuate based on real Discord activity and market forces
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /getting-started
+    - theme: alt
+      text: View on GitHub
+      link: https://github.com/InfernoHost/vn-stocks
 
-GSC (Gearfall Stock Exchange) is a fully-featured Discord stock market simulation where you trade team stocks that fluctuate based on real Discord activity and market forces.
-
-## What Makes GSC Special?
-
-**Real-time price updates** every 3 minutes based on team activity and market volatility
-
-**TradingView-style charts** with live updates, candlestick analysis, and technical indicators
-
-**Advanced trading features** like limit orders, price alerts, and watchlists
-
-**Portfolio analytics** with profit/loss tracking, ROI calculations, and pie charts
-
-**Achievement system** with 10 rare collectible badges across 5 rarity tiers
-
-**Dual currency system** (Cogs and Spurs) for precise trading down to the smallest fraction
-
----
-
-## Quick Navigation
-
-<div class="info-box">
-<strong>🆕 New to trading?</strong><br>
-Start with our <a href="getting-started.html">Getting Started Guide</a> to learn the basics
-</div>
-
-<div class="info-box success">
-<strong>📈 Ready to make moves?</strong><br>
-Check out the <a href="trading.html">Trading Guide</a> for strategies and tips
-</div>
-
-<div class="info-box tip">
-<strong>⚡ Want pro features?</strong><br>
-Learn about <a href="advanced.html">Limit Orders, Alerts & Advanced Tools</a>
-</div>
-
-<div class="info-box warning">
-<strong>❓ Got questions?</strong><br>
-Browse the <a href="faq.html">FAQ</a> or see all <a href="commands.html">Commands</a>
-</div>
-
+features:
+  - icon: 📈
+    title: Real-Time Trading
+    details: Prices update every 3 minutes based on team activity, volatility, and market momentum
+  
+  - icon: 📊
+    title: TradingView Charts
+    details: Professional live-updating graphs with candlestick analysis and technical indicators
+  
+  - icon: ⚡
+    title: Advanced Automation
+    details: Limit orders, price alerts, and watchlists let you trade 24/7 without watching charts
+  
+  - icon: 💰
+    title: Portfolio Analytics
+    details: Track profit/loss, ROI, and asset allocation with beautiful pie charts and statistics
+  
+  - icon: 🏆
+    title: Achievement System
+    details: Unlock 10 rare badges across 5 rarity tiers as you master the market
+  
+  - icon: 🎯
+    title: Beginner Friendly
+    details: Start with 10 Cogs and learn as you go - no prior trading experience needed
 ---
 
 ## Available Teams
@@ -57,8 +49,6 @@ Browse the <a href="faq.html">FAQ</a> or see all <a href="commands.html">Command
 | **POT** | Potpourri | 12 Cogs | Medium |
 | **CRAV** | Cravat | 25 Cogs | High |
 | **VOC** | Voco | 16 Cogs | Low |
-
----
 
 ## How It Works
 
@@ -75,8 +65,6 @@ The bot runs a market simulator that updates all prices based on:
 ### 3. You Make Profit 💰
 Buy low, sell high! Watch the charts, follow team activity, set up alerts, and time your trades perfectly.
 
----
-
 ## Currency System
 
 GSC uses a dual currency system for maximum precision:
@@ -88,13 +76,7 @@ GSC uses a dual currency system for maximum precision:
 
 Think of Cogs like dollars and Spurs like cents, but with a 64:1 ratio instead of 100:1.
 
----
-
 ## Ready to Start?
 
-1. [📖 Read the Getting Started Guide](getting-started.html)
-2. [💡 Learn Trading Strategies](trading.html)
-3. [⚡ Explore Advanced Features](advanced.html)
-4. [📋 Browse All Commands](commands.html)
+Type `/register` in Discord to create your account and start trading!
 
-Or just type `/register` in Discord and jump in!
