@@ -12,7 +12,7 @@ This project follows a standard code of conduct. Please be respectful and constr
 - Python 3.13 or higher
 - Git
 - Discord bot token for testing
-- Basic knowledge of discord.py library
+- Basic knowledge of discord.py library and async/await patterns
 
 ### Setting Up Development Environment
 
@@ -36,6 +36,29 @@ This project follows a standard code of conduct. Please be respectful and constr
    cp .env.example .env
    # Edit .env with your test bot credentials
    ```
+6. Run the bot:
+   ```bash
+   python bot.py
+   ```
+
+### Project Structure
+```
+bot.py                   # Main bot instance and event handlers
+commands_*.py            # Command cogs organized by category
+market.py               # Market data layer (JSON storage)
+market_simulator.py     # Price update background task
+market_updates.py       # Periodic market broadcast
+database.py             # SQLite operations
+limit_orders.py         # Limit order execution logic
+price_alerts.py         # Price alert checking
+achievements.py         # Achievement system
+graphing.py             # Line chart generation
+candlestick.py          # Candlestick chart generation
+live_graphs.py          # Live updating graph system
+team_detection.py       # Message-to-team attribution
+utils.py                # Utility functions (currency conversion, etc.)
+config.py               # Configuration and constants
+```
 
 ## Making Changes
 
@@ -77,25 +100,62 @@ async def get_user_balance(user_id: int) -> Optional[int]:
 ### Project-Specific Conventions
 
 #### Currency Handling
-- **Always** store values in Spurs internally
+- **Always** store values in Spurs internally (1 Cog = 64 Spurs)
 - Use `utils.spurs_to_cogs_display()` for user-facing output
 - Use `utils.cogs_to_spurs()` when parsing user input
+- Never mix Cogs and Spurs in calculations
 
 #### Database Operations
-- All database operations must be async
-- Use `aiosqlite` for database access
-- Always use context managers or explicit commits
+- All database operations must be async using `aiosqlite`
+- Always use `async with database.get_db() as db:` context manager
+- Commit after INSERT/UPDATE/DELETE operations
+- Use parameterized queries to prevent SQL injection
 
 #### Market Operations
 - Access market data via `market.market` singleton
 - All price updates must include timestamps
 - Use `await` for all market operations
+- Price history is stored in JSON files, not database
 
 #### Command Structure
-- Use `discord.app_commands` for slash commands
-- Return `discord.Embed` objects for responses
-- Make error messages ephemeral
-- Use emoji consistently (❌ for errors, ✅ for success)
+- Use `discord.app_commands` for slash commands (not text commands)
+- Return `discord.Embed` objects for rich responses
+- Make error messages ephemeral (`ephemeral=True`)
+- Use emoji consistently:
+  - ❌ for errors
+  - ✅ for success
+  - 📈/📉 for market movements
+  - 💰 for money
+  - 🔔 for notifications
+
+#### Background Tasks
+- Use `@tasks.loop()` from `discord.ext.tasks`
+- Always handle exceptions in background loops
+- Log errors with `logger.error()`
+- Don't block the bot with long-running operations
+
+#### Cog Structure
+- Create separate files for each command category (`commands_*.py`)
+- Include `async def setup(bot):` function
+- Add cog name to `bot.py` initial_extensions list
+- Use descriptive command names and descriptions
+
+## Feature Development
+
+### Adding New Features
+When adding a major feature:
+
+1. **Database Schema**: Update `database.py` with new tables
+2. **Business Logic**: Create separate module (e.g., `limit_orders.py`)
+3. **Commands**: Add user-facing commands in `commands_*.py`
+4. **Integration**: Hook into background tasks if needed
+5. **Documentation**: Update `docs/FEATURES.md`
+
+### Example: Adding a New Stock
+1. Add to `config.TEAMS` dict with all required fields
+2. Add role name for Discord attribution
+3. Add tags to `config.TEAM_TAGS` for message parsing
+4. Restart bot to generate JSON file
 
 ## Testing
 
@@ -105,15 +165,20 @@ Before submitting a PR, test the following:
 - [ ] Commands respond correctly
 - [ ] Database operations work
 - [ ] Market updates continue running
+- [ ] Limit orders execute properly
+- [ ] Price alerts trigger and send DMs
+- [ ] Graphs generate without errors
 - [ ] No crashes during extended runtime
 - [ ] Error messages are user-friendly
 
 ### Testing New Commands
 1. Register command in appropriate `commands_*.py` file
-2. Test with valid inputs
-3. Test with invalid inputs (error handling)
-4. Test permission requirements (if applicable)
-5. Verify ephemeral/public message behavior
+2. Add to `bot.py` initial_extensions
+3. Test with valid inputs
+4. Test with invalid inputs (error handling)
+5. Test permission requirements (if applicable)
+6. Verify ephemeral/public message behavior
+7. Check database state after execution
 
 ## Pull Request Process
 

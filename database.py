@@ -77,6 +77,67 @@ async def init_db():
             )
         """)
         
+        # Limit orders table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS limit_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                order_type TEXT NOT NULL,
+                shares INTEGER NOT NULL,
+                target_price INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT,
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Price alerts table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS price_alerts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                condition TEXT NOT NULL,
+                target_price INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Watchlist table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS watchlist (
+                user_id INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                added_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, symbol),
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Achievements table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS achievements (
+                user_id INTEGER NOT NULL,
+                achievement_id TEXT NOT NULL,
+                unlocked_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, achievement_id),
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Portfolio snapshots for analytics
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS portfolio_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                total_value INTEGER NOT NULL,
+                timestamp TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
         await db.commit()
 
 
