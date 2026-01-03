@@ -178,4 +178,4 @@ sudo systemctl restart gsc-bot
 - Ensure guild ID is set
 - Try resyncing: restart bot
 
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed troubleshooting.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed troubleshooting.
