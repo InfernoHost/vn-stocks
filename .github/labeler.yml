@@ -1,55 +1,77 @@
 # Auto-label PRs based on changed files
 
 # Bot core
-'bot-core':
-  - 'bot.py'
-  - 'market_simulator.py'
-  - 'market_updates.py'
+bot-core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - bot.py
+          - market_simulator.py
+          - market_updates.py
 
 # Commands
-'commands':
-  - 'commands_*.py'
+commands:
+  - changed-files:
+      - any-glob-to-any-file:
+          - commands_*.py
 
 # Configuration
-'configuration':
-  - 'config.py'
-  - '.env.example'
+configuration:
+  - changed-files:
+      - any-glob-to-any-file:
+          - config.py
+          - .env.example
 
 # Database
-'database':
-  - 'database.py'
-  - 'data/**/*'
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - database.py
+          - data/**/*
 
 # Documentation
-'documentation':
-  - 'docs/**/*'
-  - '*.md'
-  - 'README.md'
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**/*
+          - '*.md'
+          - README.md
 
 # CI/CD
-'ci-cd':
-  - '.github/workflows/**/*'
-  - '.github/dependabot.yml'
+ci-cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/**/*
+          - .github/dependabot.yml
 
 # Dependencies
-'dependencies':
-  - 'requirements.txt'
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - requirements.txt
 
 # Security
-'security':
-  - 'SECURITY.md'
-  - '.gitignore'
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - SECURITY.md
+          - .gitignore
 
 # UI/UX
-'ui-ux':
-  - 'graphing.py'
+ui-ux:
+  - changed-files:
+      - any-glob-to-any-file:
+          - graphing.py
 
 # Utilities
-'utilities':
-  - 'utils.py'
-  - 'team_detection.py'
+utilities:
+  - changed-files:
+      - any-glob-to-any-file:
+          - utils.py
+          - team_detection.py
 
 # Market
-'market':
-  - 'market.py'
-  - 'data/stocks/**/*'
+market:
+  - changed-files:
+      - any-glob-to-any-file:
+          - market.py
+          - data/stocks/**/*

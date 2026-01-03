@@ -193,6 +193,14 @@ async def get_player(user_id: int) -> Optional[Dict]:
             return None
 
 
+async def get_balance(user_id: int) -> Optional[int]:
+    """Get player balance."""
+    player = await get_player(user_id)
+    if player:
+        return player['balance']
+    return None
+
+
 async def update_balance(user_id: int, amount: int) -> bool:
     """Update player balance. Amount can be positive or negative. Returns True if successful."""
     async with aiosqlite.connect(config.DB_PATH) as db:
