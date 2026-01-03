@@ -1,0 +1,77 @@
+# Auto-label PRs based on changed files
+
+# Bot core
+bot-core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - bot.py
+          - market_simulator.py
+          - market_updates.py
+
+# Commands
+commands:
+  - changed-files:
+      - any-glob-to-any-file:
+          - commands_*.py
+
+# Configuration
+configuration:
+  - changed-files:
+      - any-glob-to-any-file:
+          - config.py
+          - .env.example
+
+# Database
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - database.py
+          - data/**/*
+
+# Documentation
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**/*
+          - '*.md'
+          - README.md
+
+# CI/CD
+ci-cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/**/*
+          - .github/dependabot.yml
+
+# Dependencies
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - requirements.txt
+
+# Security
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - SECURITY.md
+          - .gitignore
+
+# UI/UX
+ui-ux:
+  - changed-files:
+      - any-glob-to-any-file:
+          - graphing.py
+
+# Utilities
+utilities:
+  - changed-files:
+      - any-glob-to-any-file:
+          - utils.py
+          - team_detection.py
+
+# Market
+market:
+  - changed-files:
+      - any-glob-to-any-file:
+          - market.py
+          - data/stocks/**/*

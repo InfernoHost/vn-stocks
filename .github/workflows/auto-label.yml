@@ -1,0 +1,30 @@
+name: Auto Label PRs
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      # Checkout the PR code so we can read the .github/labeler.yml from THIS branch
+      # instead of the main branch (which might not have it yet)
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ github.token }}
+          sync-labels: true
+          configuration-path: .github/labeler.yml
