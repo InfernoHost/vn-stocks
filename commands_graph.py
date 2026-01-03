@@ -159,8 +159,6 @@ class GraphCommands(commands.Cog):
                 f"❌ Failed to generate graph: {str(e)}",
                 ephemeral=True
             )
-                ephemeral=True
-            )
     
     @app_commands.command(name="compare", description="Compare price history of multiple stocks")
     @app_commands.describe(

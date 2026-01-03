@@ -61,32 +61,67 @@ async def generate_price_graph(symbol: str, days: int = 7) -> str:
     if not timestamps:
         raise ValueError(f"No valid price history for {symbol}")
     
-    # Create figure
-    fig, ax = plt.subplots(figsize=(config.GRAPH_WIDTH, config.GRAPH_HEIGHT), dpi=config.GRAPH_DPI)
+    # Create figure with dark theme like TradingView
+    fig = plt.figure(figsize=(config.GRAPH_WIDTH, config.GRAPH_HEIGHT), dpi=config.GRAPH_DPI, facecolor='#0D1117')
+    ax = fig.add_subplot(111, facecolor='#161B22')
     
-    # Plot data with gradient color
-    ax.plot(timestamps, prices, linewidth=2.5, color='#5865F2', label='Price')
-    ax.fill_between(timestamps, prices, alpha=0.4, color='#5865F2')
+    # Plot line with glow effect (TradingView style)
+    # Main line
+    line_color = '#26A69A' if prices[-1] > prices[0] else '#EF5350'  # Green if up, red if down
+    ax.plot(timestamps, prices, linewidth=2.5, color=line_color, label='Price', zorder=3)
     
-    # Format
+    # Add subtle glow
+    ax.plot(timestamps, prices, linewidth=6, color=line_color, alpha=0.15, zorder=2)
+    
+    # Fill with gradient (lighter at top)
+    ax.fill_between(timestamps, prices, alpha=0.15, color=line_color, zorder=1)
+    
+    # Calculate and plot moving average (optional, if enough data)
+    if len(prices) > 10:
+        ma_period = min(10, len(prices) // 3)
+        ma_prices = []
+        for i in range(len(prices)):
+            if i < ma_period:
+                ma_prices.append(sum(prices[:i+1]) / (i+1))
+            else:
+                ma_prices.append(sum(prices[i-ma_period+1:i+1]) / ma_period)
+        ax.plot(timestamps, ma_prices, linewidth=1.5, color='#7B68EE', alpha=0.7, linestyle='--', label=f'{ma_period}MA', zorder=2)
+    
+    # Format with TradingView style
     team_name = team_detection.get_team_name(symbol)
-    ax.set_title(f'{symbol} - {team_name} Price History', fontsize=16, fontweight='bold', color='white')
-    ax.set_xlabel('Time', fontsize=12, color='white')
-    ax.set_ylabel('Price (Cogs)', fontsize=12, color='white')
+    current_price = prices[-1]
+    price_change = prices[-1] - prices[0]
+    price_change_pct = (price_change / prices[0] * 100) if prices[0] != 0 else 0
+    change_emoji = '▲' if price_change > 0 else '▼'
     
-    # Format x-axis
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+    ax.set_title(
+        f'{symbol} - {team_name}  |  {current_price:.2f}C {change_emoji}{abs(price_change_pct):.1f}%',
+        fontsize=14, fontweight='bold', color='#C9D1D9', pad=20
+    )
+    ax.set_xlabel('', fontsize=10)  # No label, cleaner look
+    ax.set_ylabel('Price (Cogs)', fontsize=11, color='#8B949E')
+    
+    # Format x-axis (TradingView style - cleaner)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n%H:%M'))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    plt.xticks(rotation=45, ha='right', color='white')
-    plt.yticks(color='white')
+    plt.setp(ax.xaxis.get_majorticklabels(), color='#8B949E', fontsize=9)
+    plt.setp(ax.yaxis.get_majorticklabels(), color='#8B949E', fontsize=9)
     
-    # Grid with custom color
-    ax.grid(True, alpha=0.2, linestyle='--', color='#99AAB5')
+    # Grid with TradingView style (horizontal only, subtle)
+    ax.grid(True, axis='y', alpha=0.1, linestyle='-', color='#30363D', linewidth=0.8)
+    ax.grid(False, axis='x')
     
-    # Style spines
-    for spine in ax.spines.values():
-        spine.set_color('#2C2F33')
-        spine.set_linewidth(1.5)
+    # Remove top and right spines (TradingView style)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_color('#30363D')
+    ax.spines['bottom'].set_color('#30363D')
+    ax.spines['left'].set_linewidth(1)
+    ax.spines['bottom'].set_linewidth(1)
+    
+    # Add legend with dark theme
+    legend = ax.legend(loc='upper left', framealpha=0.9, facecolor='#161B22', edgecolor='#30363D')
+    plt.setp(legend.get_texts(), color='#8B949E', fontsize=9)
     
     # Tight layout
     plt.tight_layout()
