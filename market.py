@@ -4,6 +4,7 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 import asyncio
+import aiofiles
 import config
 from logger import logger
 import validators
@@ -16,6 +17,10 @@ class MarketData:
         self.data_dir = config.MARKET_DATA_DIR
         self.activity_scores = {symbol: 0 for symbol in config.TEAMS.keys()}
         self._lock = asyncio.Lock()
+        # In-memory cache for frequently accessed stock data
+        self._cache = {}
+        self._cache_timestamps = {}
+        self._cache_ttl = 5.0  # Cache TTL in seconds
     
     def _get_stock_file(self, symbol: str) -> str:
         """Get the file path for a stock's JSON file."""
@@ -31,6 +36,20 @@ class MarketData:
             raise ValueError(f"Invalid file path for symbol: {symbol}")
         
         return filepath
+    
+    def _is_cache_valid(self, symbol: str) -> bool:
+        """Check if cached data is still valid."""
+        if symbol not in self._cache:
+            return False
+        
+        import time
+        timestamp = self._cache_timestamps.get(symbol, 0)
+        return (time.time() - timestamp) < self._cache_ttl
+    
+    def _invalidate_cache(self, symbol: str):
+        """Invalidate cache for a specific symbol."""
+        self._cache.pop(symbol, None)
+        self._cache_timestamps.pop(symbol, None)
     
     async def initialize(self):
         """Set up data directory and create stock files."""
@@ -57,7 +76,11 @@ class MarketData:
                 await self._write_stock_data(symbol, stock_data)
     
     async def _read_stock_data(self, symbol: str) -> Optional[Dict]:
-        """Read stock data from JSON file."""
+        """Read stock data from JSON file with caching."""
+        # Check cache first
+        if self._is_cache_valid(symbol):
+            return self._cache[symbol].copy()
+        
         try:
             stock_file = self._get_stock_file(symbol)
         except ValueError as e:
@@ -67,31 +90,46 @@ class MarketData:
         if not os.path.exists(stock_file):
             return None
         
-        async with self._lock:
-            try:
-                with open(stock_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except json.JSONDecodeError as e:
-                logger.error(f"Corrupted JSON for {symbol}: {e}")
-                return None
-            except IOError as e:
-                logger.error(f"Failed to read {stock_file}: {e}")
-                return None
+        try:
+            # Async file reading without holding lock during I/O
+            async with aiofiles.open(stock_file, 'r', encoding='utf-8') as f:
+                content = await f.read()
+                data = json.loads(content)
+            
+            # Update cache
+            import time
+            self._cache[symbol] = data
+            self._cache_timestamps[symbol] = time.time()
+            
+            return data.copy()
+        except json.JSONDecodeError as e:
+            logger.error(f"Corrupted JSON for {symbol}: {e}")
+            return None
+        except IOError as e:
+            logger.error(f"Failed to read {stock_file}: {e}")
+            return None
     
     async def _write_stock_data(self, symbol: str, data: Dict):
-        """Write stock data to JSON file."""
+        """Write stock data to JSON file asynchronously."""
         try:
             stock_file = self._get_stock_file(symbol)
         except ValueError as e:
             logger.error(f"Invalid symbol in _write_stock_data: {e}")
             return
         
-        async with self._lock:
-            try:
-                with open(stock_file, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-            except IOError as e:
-                logger.error(f"Failed to write {stock_file}: {e}")
+        try:
+            # Serialize JSON first (CPU-bound operation outside lock)
+            json_content = json.dumps(data, indent=2, ensure_ascii=False)
+            
+            # Lock only for write operation
+            async with self._lock:
+                async with aiofiles.open(stock_file, 'w', encoding='utf-8') as f:
+                    await f.write(json_content)
+            
+            # Invalidate cache after successful write
+            self._invalidate_cache(symbol)
+        except IOError as e:
+            logger.error(f"Failed to write {stock_file}: {e}")
     
     async def get_price(self, symbol: str) -> Optional[int]:
         """Get current price for a stock."""
@@ -141,6 +179,13 @@ class MarketData:
             data['price_history'] = data['price_history'][-config.PRICE_HISTORY_MAX:]
         
         await self._write_stock_data(symbol, data)
+    
+    async def update_prices_batch(self, updates: Dict[str, int]):
+        """Update multiple stock prices in batch for better performance."""
+        tasks = []
+        for symbol, new_price in updates.items():
+            tasks.append(self.update_price(symbol, new_price))
+        await asyncio.gather(*tasks)
     
     async def reset_prices(self):
         """Reset all stock prices to starting values."""

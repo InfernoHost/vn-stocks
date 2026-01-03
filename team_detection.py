@@ -1,8 +1,16 @@
 """Team detection from roles and message tags."""
 import re
 from typing import Optional
+from functools import lru_cache
 import discord
 import config
+
+
+# Pre-compile regex pattern at module level for performance
+_TAG_PATTERN = re.compile(r'\[([^\]]+)\]')
+
+# Build reverse lookup map for O(1) role name → symbol lookups
+_ROLE_TO_SYMBOL = {team['role_name']: symbol for symbol, team in config.TEAMS.items()}
 
 
 def detect_team_from_message(message: discord.Message) -> Optional[str]:
@@ -27,11 +35,10 @@ def _detect_team_from_roles(member: discord.Member) -> Optional[str]:
     if not isinstance(member, discord.Member):
         return None
     
-    # Check roles in order
+    # Use reverse lookup map for O(1) performance
     for role in member.roles:
-        for symbol, team in config.TEAMS.items():
-            if role.name == team['role_name']:
-                return symbol
+        if role.name in _ROLE_TO_SYMBOL:
+            return _ROLE_TO_SYMBOL[role.name]
     
     return None
 
@@ -44,10 +51,8 @@ def _detect_team_from_tags(content: str) -> Optional[str]:
     if not content:
         return None
     
-    # Find all potential tags in the message
-    # Match patterns like [TAG] (case-insensitive)
-    tag_pattern = r'\[([^\]]+)\]'
-    matches = re.finditer(tag_pattern, content)
+    # Find all potential tags using pre-compiled pattern
+    matches = _TAG_PATTERN.finditer(content)
     
     # Process tags in order of appearance
     for match in matches:
@@ -57,26 +62,36 @@ def _detect_team_from_tags(content: str) -> Optional[str]:
         if tag.startswith('[') and tag.endswith(']'):
             tag = tag[1:-1]
         
-        # Check if this tag maps to a team
-        if tag in config.TEAM_TAGS:
-            return config.TEAM_TAGS[tag]
+        # Check if this tag maps to a team (using cached lookup)
+        symbol = _get_team_symbol_from_tag(tag)
+        if symbol:
+            return symbol
     
     return None
 
 
+@lru_cache(maxsize=128)
+def _get_team_symbol_from_tag(tag: str) -> Optional[str]:
+    """Get team symbol from tag with LRU caching."""
+    return config.TEAM_TAGS.get(tag)
+
+
+@lru_cache(maxsize=32)
 def get_team_name(symbol: str) -> Optional[str]:
     """Get the full team name from symbol."""
-    team = config.TEAMS.get(symbol)
+    team = config.TEAMS.get(symbol.upper())
     if team:
         return team['name']
     return None
 
 
+@lru_cache(maxsize=32)
 def get_team_info(symbol: str) -> Optional[dict]:
     """Get full team configuration."""
-    return config.TEAMS.get(symbol)
+    return config.TEAMS.get(symbol.upper())
 
 
+@lru_cache(maxsize=64)
 def validate_symbol(symbol: str) -> bool:
     """Check if a symbol is valid."""
     return symbol.upper() in config.TEAMS
