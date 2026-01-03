@@ -1,9 +1,11 @@
 """Database operations for player accounts and portfolios."""
 import aiosqlite
 import os
+import time
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
 import config
+import validators
 from logger import logger
 
 
@@ -76,6 +78,14 @@ async def init_db():
                 cooldown_until INTEGER NOT NULL
             )
         """)
+        
+        # Create indexes for performance
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_user_id ON portfolio(user_id)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_symbol ON portfolio(symbol)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_transactions_timestamp ON transactions(timestamp)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_players_balance ON players(balance DESC)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_admin_log_timestamp ON admin_log(timestamp)")
         
         await db.commit()
 
@@ -158,12 +168,9 @@ async def get_holding(user_id: int, symbol: str) -> Optional[Dict]:
 
 async def update_portfolio(user_id: int, symbol: str, shares: int, price: int, is_buy: bool) -> bool:
     """Update portfolio after buy/sell. Returns True if successful."""
-    import validators
-    
     # Validate inputs to prevent overflow
     valid_transaction, error_msg = validators.validate_transaction(shares, price)
     if not valid_transaction:
-        from logger import logger
         logger.error(f"Invalid transaction: {error_msg}")
         return False
     
@@ -226,7 +233,6 @@ async def update_portfolio(user_id: int, symbol: str, shares: int, price: int, i
         except Exception as e:
             # Rollback on any error
             await db.rollback()
-            from logger import logger
             logger.error(f"Portfolio update failed for user {user_id}, symbol {symbol}: {e}")
             return False
 
@@ -270,7 +276,6 @@ async def get_leaderboard(limit: int = 10) -> List[Tuple[int, int]]:
 
 async def check_message_cooldown(user_id: int, cooldown_seconds: int) -> bool:
     """Check if user is on cooldown. Returns True if can send influence message."""
-    import time
     current_time = int(time.time())
     
     async with aiosqlite.connect(config.DB_PATH) as db:
@@ -304,7 +309,6 @@ async def check_message_cooldown(user_id: int, cooldown_seconds: int) -> bool:
 
 async def set_team_trade_cooldown(symbol: str, cooldown_seconds: int):
     """Set a trading cooldown for a specific team after admin events."""
-    import time
     cooldown_until = int(time.time()) + cooldown_seconds
     
     async with aiosqlite.connect(config.DB_PATH) as db:
@@ -321,7 +325,6 @@ async def check_team_trade_cooldown(symbol: str) -> Optional[int]:
     Check if a team has an active trading cooldown.
     Returns remaining seconds if on cooldown, None otherwise.
     """
-    import time
     current_time = int(time.time())
     
     async with aiosqlite.connect(config.DB_PATH) as db:
