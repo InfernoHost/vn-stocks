@@ -4,9 +4,17 @@ import os
 import time
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
+from contextlib import asynccontextmanager
 import config
 import validators
 from logger import logger
+
+
+@asynccontextmanager
+async def get_db():
+    """Context manager for database connections."""
+    async with aiosqlite.connect(config.DB_PATH) as db:
+        yield db
 
 
 async def init_db():
@@ -79,6 +87,67 @@ async def init_db():
             )
         """)
         
+        # Limit orders table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS limit_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                order_type TEXT NOT NULL,
+                shares INTEGER NOT NULL,
+                target_price INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT,
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Price alerts table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS price_alerts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                condition TEXT NOT NULL,
+                target_price INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Watchlist table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS watchlist (
+                user_id INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                added_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, symbol),
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Achievements table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS achievements (
+                user_id INTEGER NOT NULL,
+                achievement_id TEXT NOT NULL,
+                unlocked_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, achievement_id),
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
+        # Portfolio snapshots for analytics
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS portfolio_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                total_value INTEGER NOT NULL,
+                timestamp TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES players(user_id)
+            )
+        """)
+        
         # Create indexes for performance
         await db.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_user_id ON portfolio(user_id)")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_symbol ON portfolio(symbol)")
@@ -86,6 +155,12 @@ async def init_db():
         await db.execute("CREATE INDEX IF NOT EXISTS idx_transactions_timestamp ON transactions(timestamp)")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_players_balance ON players(balance DESC)")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_admin_log_timestamp ON admin_log(timestamp)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_limit_orders_user_id ON limit_orders(user_id)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_limit_orders_symbol ON limit_orders(symbol)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_price_alerts_user_id ON price_alerts(user_id)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_watchlist_user_id ON watchlist(user_id)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_achievements_user_id ON achievements(user_id)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_snapshots_user_id ON portfolio_snapshots(user_id)")
         
         await db.commit()
 
