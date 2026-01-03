@@ -84,73 +84,40 @@ class InfoCommands(commands.Cog):
         
         # Trading Commands
         embed.add_field(
-            name="💰 Basic Trading",
+            name="💰 Trading Commands",
             value=(
                 "`/register` - Create your trading account\n"
-                "`/balance` - Check your wallet\n"
+                "`/balance` - Check your wallet and net worth\n"
                 "`/market` - View all stock prices\n"
-                "`/stock <symbol>` - Stock details\n"
-                "`/buy <symbol> <shares>` - Buy shares\n"
-                "`/sell <symbol> <shares>` - Sell shares\n"
-                "`/portfolio` - Your holdings with pie chart"
+                "`/stock <symbol>` - View stock details & trade\n"
+                "`/buy <symbol> <shares>` - Quick buy\n"
+                "`/sell <symbol> <shares>` - Quick sell\n"
+                "`/portfolio` - View your holdings"
             ),
             inline=False
         )
         
         # Analysis Commands
         embed.add_field(
-            name="📊 Analysis & Charts",
+            name="📊 Analysis Commands",
             value=(
-                "`/graph <symbol>` - Live updating price chart\n"
-                "`/candlestick <symbol>` - OHLC candlestick chart\n"
-                "`/history [days] [symbol]` - Your trade history\n"
-                "`/activity` - Team activity levels\n"
-                "`/leaderboard` - Top traders"
+                "`/graph <symbol>` - View price history chart\n"
+                "`/compare <symbols>` - Compare multiple stocks\n"
+                "`/activity` - View team activity levels\n"
+                "`/leaderboard` - Top traders rankings"
             ),
-            inline=False
-        )
-        
-        # Advanced Trading
-        embed.add_field(
-            name="🎯 Advanced Trading",
-            value=(
-                "`/limitbuy <symbol> <shares> <price>` - Auto-buy at target\n"
-                "`/limitsell <symbol> <shares> <price>` - Auto-sell at target\n"
-                "`/orders` - View your limit orders\n"
-                "`/cancelorder <id>` - Cancel an order"
-            ),
-            inline=False
-        )
-        
-        # Alerts & Watchlist
-        embed.add_field(
-            name="🔔 Alerts & Watchlist",
-            value=(
-                "`/alert <symbol> <above/below> <price>` - Price alert\n"
-                "`/alerts` - View your alerts\n"
-                "`/watch <symbol>` - Add to watchlist\n"
-                "`/watchlist` - View watchlist with 24h changes"
-            ),
-            inline=False
-        )
-        
-        # Achievements
-        embed.add_field(
-            name="🏆 Achievements",
-            value="`/achievements` - View unlocked badges and progress",
             inline=False
         )
         
         # Market Info
         embed.add_field(
-            name="📈 Market Info",
+            name="📈 Market Information",
             value=(
                 "• Prices update every **3 minutes**\n"
-                "• Activity + volatility + momentum\n"
+                "• Team activity affects prices\n"
                 "• Starting balance: **10 Cogs**\n"
                 "• 1 Cog = 64 Spurs\n"
-                "• Limit orders auto-execute\n"
-                "• Alerts send you DMs"
+                "• 🚫 **Can't trade your own team's stock** (anti-manipulation)"
             ),
             inline=False
         )
@@ -180,7 +147,7 @@ class InfoCommands(commands.Cog):
                     inline=False
                 )
         
-        embed.set_footer(text="Full docs: github.com/InfernoHost/vn-stocks • Use /stock for quick trading!")
+        embed.set_footer(text="Use /stock <symbol> for interactive trading with buttons!")
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
