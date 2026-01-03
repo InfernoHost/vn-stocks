@@ -62,7 +62,6 @@ jobs:
       
       - name: AI Code Review with Gemini
         id: ai-review
-        if: secrets.GEMINI_API_KEY != ''
         continue-on-error: true
         run: |
           PR_INFO='${{ steps.pr-info.outputs.result }}'
