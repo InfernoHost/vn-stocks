@@ -66,24 +66,33 @@ TEAMS = {
         'starting_price': 1 * SPURS_PER_COG,
         'volatility': 0.02,
         'role_name': 'Team Potchi'
+    },
+    'HORZ': {
+        'name': 'Team New Horizon',
+        'symbol': 'HORZ',
+        'starting_price': 1 * SPURS_PER_COG,
+        'volatility': 0.02,
+        'role_name': 'Team New Horizon'
     }
 }
 
 # Team Tag Mapping (case-insensitive)
 TEAM_TAGS = {
-    'NH': 'STMP',
     'STEAMPIRE': 'STMP',
+    'STMP': 'STMP',
     'CRAVA': 'CRAV',
-    'CHEATER': 'CRAV',
+    'CRAV': 'CRAV',
     'ROSE': 'ROSE',
     'VOC': 'VOC',
-    'SOLO': 'VOC',
     'POTCHI': 'POT',
     'KOS': 'POT',
     'CRACKHEAD': 'POT',
     'TEMP': 'VIOL',
     'VIOLET': 'VIOL',
-    '[[L]]': 'VIOL'
+    '[[L]]': 'VIOL',
+    'HORIZON': 'HORZ',
+    'HORZ': 'HORZ',
+    'NEW HORIZON': 'HORZ'
 }
 
 # Message Influence Configuration
