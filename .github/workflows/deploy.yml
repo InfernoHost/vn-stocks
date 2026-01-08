@@ -95,6 +95,12 @@ jobs:
           echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" | sudo -u gscbot tee /opt/gsc-bot/.env > /dev/null
           echo "GUILD_ID=${{ secrets.GUILD_ID }}" | sudo -u gscbot tee -a /opt/gsc-bot/.env > /dev/null
           echo "ADMIN_ROLE_ID=${{ secrets.ADMIN_ROLE_ID }}" | sudo -u gscbot tee -a /opt/gsc-bot/.env > /dev/null
+          echo "MARKET_UPDATES_CHANNEL_ID=${{ secrets.MARKET_UPDATES_CHANNEL_ID }}" | sudo -u gscbot tee -a /opt/gsc-bot/.env > /dev/null
+          
+          # Create data directories and set permissions
+          sudo mkdir -p /opt/gsc-bot/data/stocks /opt/gsc-bot/data/graphs
+          sudo chown -R gscbot:gscbot /opt/gsc-bot/data
+          sudo chmod -R 755 /opt/gsc-bot/data
           
           # Restart bot
           sudo systemctl restart gsc-bot

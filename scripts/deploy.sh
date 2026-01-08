@@ -33,6 +33,11 @@ pip install -r requirements.txt
 echo "Setting up data directories..."
 mkdir -p data/stocks data/graphs
 
+# Fix permissions on data directory
+echo "Setting permissions..."
+chmod -R 755 data/
+chown -R $(whoami):$(whoami) data/
+
 # Check if .env file exists
 if [ ! -f "$PROJECT_DIR/.env" ]; then
     echo "ERROR: .env file not found!"
