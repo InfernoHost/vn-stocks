@@ -92,7 +92,8 @@ TEAM_TAGS = {
     '[[L]]': 'VIOL',
     'HORIZON': 'HORZ',
     'HORZ': 'HORZ',
-    'NEW HORIZON': 'HORZ'
+    'NEW HORIZON': 'HORZ',
+    'NH': 'HORZ'
 }
 
 # Message Influence Configuration
